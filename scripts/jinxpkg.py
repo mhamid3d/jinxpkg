@@ -74,7 +74,6 @@ def main():
 
         os.mkdir(os.path.join(pkg_dir, "src"))
         os.mkdir(os.path.join(pkg_dir, "src", package_name))
-        src_dir_init = open(os.path.join(pkg_dir, "src", "__init__.py"), "w+")
         src_init = open(os.path.join(pkg_dir, "src", package_name, "__init__.py"), "w+")
         os.mkdir(os.path.join(pkg_dir, "tests"))
         os.mkdir(os.path.join(pkg_dir, "scripts"))
