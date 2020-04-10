@@ -69,10 +69,20 @@ def init_opt():
         Alternativly you can enter USER, and it will publish the tool to the users directory
              """
     )
+    ARGPARSER.add_argument(
+        "-v",
+        "--version",
+        dest="version",
+        type=str,
+        help="""
+            The version for a new publish. Should use this format: {MAJOR}_{MINOR}_{PATCH}
+        """
+    )
 
 
 def validate_publish(args):
     package_name = args.package
+    version = args.version
     local_path = os.path.abspath(args.package)
     publish_type = args.type
     publish_dir = os.path.join(args.directory, args.type)
@@ -92,24 +102,30 @@ def validate_publish(args):
             data = json.load(cf)
             cf.close()
 
-        required_keys = ["package", "version", "context"]
+        required_keys = ["package", "context"]
         for key in required_keys:
             assert key in data.keys(), "Required key '{}' missing from CONFIG File".format(key)
             assert data[key], "Required key '{}' returns None in CONFIG File".format(key)
-            if key == "version":
-                target_dir = os.path.join(
-                    publish_dir, data['context'],
-                    data['package'],
-                    "{}-{}".format(data['package'], data['version'])
-                )
-                assert not os.path.exists(
-                    target_dir
-                ), "Package '{}' With Version '{}' Of Target '{}' Already Exists! Edit the Config version.".format(
-                    data['package'], data['version'], args.type)
 
         assert str(data['package']) == str(args.package), "Given Package Name Doesn't Match With CONFIG Package Name!"
 
         LOGGER.info("##### Config File...........OK")
+
+        # ----- ASSERT VERSION ----- #
+        assert version, "No Version Was Given For The Publish"
+        assert len(version.split("_")) == 3, "Invalid Version Given: {}. See --help for version syntax".format(version)
+
+        target_dir = os.path.join(
+            publish_dir, data['context'],
+            data['package'],
+            "{}-{}".format(data['package'], version)
+        )
+        assert not os.path.exists(
+            target_dir
+        ), "Package '{}' With Version '{}' Of Target '{}' Already Exists! Edit the Config version.".format(
+            data['package'], version, args.type)
+
+        LOGGER.info("##### Publish Version.......OK")
 
         # ----- ASSERT SOURCE FILES EXISTS ----- #
         source_dir = os.path.join(local_path, "src", data['package'])
@@ -117,7 +133,7 @@ def validate_publish(args):
 
         LOGGER.info("##### Source Files..........OK")
 
-        return package_name, source_dir, script_dir, publish_dir, data['version'], data['context']
+        return package_name, source_dir, script_dir, publish_dir, version, data['context']
 
     except AssertionError as ae:
 
@@ -181,6 +197,7 @@ def main():
                 os.makedirs(module_dir)
             LOGGER.info("##### Copying Files...")
             dir_util.copy_tree(source_dir, module_dir)
+            jinxpkg.make_version_file(module_dir, version)
             if os.path.exists(script_dir) and os.listdir(script_dir):
                 LOGGER.info("##### Publishing Scripts...")
                 for script in os.listdir(script_dir):

@@ -1,0 +1,34 @@
+#------------------------------------------------------------------------------
+# Name:		{{package_name}}.__init__
+# Author:	jinxpkg
+#------------------------------------------------------------------------------
+
+"""
+Auto-generated script to pick the approriate version of {{package_name}} version.
+"""
+
+def __load():
+	import os
+	from jinxpkg import jinximport
+
+	pkgrelease = ""
+	pkgrelease = jinximport.getPackageRelease(package={{package_name}}, init=__file__)
+
+	if pkgrelease:
+		current_path = __path__[0]
+
+		new_path = os.path.join( current_path, pkgrelease )
+		init_path = os.path.join( new_path, "__init__.py" )
+
+		__path__[:] = [new_path]
+
+		initf = open( init_path )
+		exec compile( initf.read(), init_path, "exec" ) in globals()
+		initf.close()
+
+	else:
+		raise ImportError( "Could not find [%s] package version" % os.path.basename(__path__) )
+
+__load()
+
+del __load
