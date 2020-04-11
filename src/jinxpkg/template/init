@@ -22,8 +22,9 @@ def __load():
 
 		__path__[:] = [new_path]
 
-		initf = open( init_path )
-		exec compile( initf.read(), init_path, "exec" ) in globals()
+		initf = open(init_path)
+		module = compile(initf.read(), init_path, "exec")
+		exec(module, globals())
 		initf.close()
 
 	else:
