@@ -1,1 +1,1 @@
-python %~dp0\jinxpkg_py %*
+python %~dp0\jinxpkg %*
