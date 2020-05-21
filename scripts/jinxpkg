@@ -147,9 +147,7 @@ def validate_publish(args):
         return package_name, source_dir, script_dir, publish_dir, version, data['context']
 
     except AssertionError as ae:
-
         LOGGER.error(ae.args[0])
-
         return False
 
 
@@ -174,9 +172,22 @@ def main():
 
         os.mkdir(os.path.join(pkg_dir, "src"))
         os.mkdir(os.path.join(pkg_dir, "src", package_name))
-        #TODO: create __version__ attribute in the init file.
+
+        # Template init file for pacakge
         src_init = open(os.path.join(pkg_dir, "src", package_name, "__init__.py"), "w+")
+        if sys.version[0] == str(2):
+            import pkgutil
+            jinxpkg_location = pkgutil.get_loader('jinxpkg').filename
+        elif sys.version[0] == str(3):
+            import importlib
+            jinxpkg_location = os.path.join(importlib.util.find_spec("jinxpkg").origin, os.pardir)
+        template_path = os.path.abspath(os.path.join(jinxpkg_location, "template", "package_init"))
+        template_file = open(template_path, "r")
+        inf = template_file.read()
+        src_init.write(inf)
+        template_file.close()
         src_init.close()
+
         os.mkdir(os.path.join(pkg_dir, "tests"))
         os.mkdir(os.path.join(pkg_dir, "scripts"))
 
@@ -203,7 +214,7 @@ def main():
             LOGGER.info("##### Making Directories...")
             if not os.path.exists(target_source):
                 os.makedirs(module_dir)
-                jinxpkg.make_package_init(target_source)
+                jinxpkg.make_version_init(target_source)
                 LOGGER.info("##### Creating Version Entry...")
             else:
                 os.makedirs(module_dir)
@@ -215,8 +226,7 @@ def main():
                 for script in os.listdir(script_dir):
                     script_file = os.path.join(script_dir, script)
                     if not os.path.isdir(script_file):
-                        script_name_agnostic = str(script).replace("_py", "")
-                        target_script_file = os.path.join(publish_dir, "scripts", script_name_agnostic)
+                        target_script_file = os.path.join(publish_dir, "scripts", str(script))
                         file_util.copy_file(script_file, target_script_file)
             LOGGER.info("#####  DONE | {} is now published!".format(os.path.basename(os.path.normpath(module_dir))))
             set_this_version = builtins.input("Set this version as latest on {} ? (y/n): ".format(ARGS.type))
